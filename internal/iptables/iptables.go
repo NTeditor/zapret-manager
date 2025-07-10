@@ -1,6 +1,7 @@
 package iptables
 
 import (
+	"context"
 	"log"
 	"os/exec"
 	"strings"
@@ -26,29 +27,29 @@ func NewIptables() *iptables {
 	}
 }
 
-func (ip *iptables) SetupIptables() error {
+func (ip *iptables) SetupIptables(ctx context.Context) error {
 	if ip.multiportSupport {
-		if err := ip.setupIptablesMultiport(); err != nil {
+		if err := ip.setupIptablesMultiport(ctx); err != nil {
 			return err
 		}
 	} else {
-		if err := ip.setupIptablesTcp(); err != nil {
+		if err := ip.setupIptablesTcp(ctx); err != nil {
 			return err
 		}
-		if err := ip.setupIptablesUdp(); err != nil {
+		if err := ip.setupIptablesUdp(ctx); err != nil {
 			return err
 		}
 	}
 
-	if err := exec.Command("sysctl", "-w", "net.netfilter.nf_conntrack_tcp_be_liberal=1").Run(); err != nil {
+	if err := exec.CommandContext(ctx, "sysctl", "-w", "net.netfilter.nf_conntrack_tcp_be_liberal=1").Run(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (ip *iptables) CleanIptables() error {
-	if err := exec.Command("iptables", "-t", "mangle", "-F").Run(); err != nil {
+func (ip *iptables) CleanIptables(ctx context.Context) error {
+	if err := exec.CommandContext(ctx, "iptables", "-t", "mangle", "-F").Run(); err != nil {
 		return err
 	}
 	return nil
@@ -64,14 +65,14 @@ func (ip *iptables) enableMarkAndConnbytes(iptablesArgs *[]string) {
 	}
 }
 
-func (ip *iptables) setupIptablesMultiport() error {
+func (ip *iptables) setupIptablesMultiport(ctx context.Context) error {
 	tcpPortsString := strings.Join(ip.nfqwsPortsTcp, ",")
 	udpPortsString := strings.Join(ip.nfqwsPortsUdp, ",")
 
 	cmdArgsTCP := []string{"-t", "mangle", "-I", "POSTROUTING", "-p", "tcp", "-m", "multiport",
 		"--dports", tcpPortsString, "-j", "NFQUEUE", "--queue-num", "200", "--queue-bypass"}
 	ip.enableMarkAndConnbytes(&cmdArgsTCP)
-	if err := exec.Command("iptables", cmdArgsTCP...).Run(); err != nil {
+	if err := exec.CommandContext(ctx, "iptables", cmdArgsTCP...).Run(); err != nil {
 		return &ErrSetupPortRule{
 			Protocol:  "tcp",
 			Multiport: true,
@@ -84,7 +85,7 @@ func (ip *iptables) setupIptablesMultiport() error {
 	cmdArgsUDP := []string{"-t", "mangle", "-I", "POSTROUTING", "-p", "udp", "-m", "multiport",
 		"--dports", udpPortsString, "-j", "NFQUEUE", "--queue-num", "200", "--queue-bypass"}
 	ip.enableMarkAndConnbytes(&cmdArgsUDP)
-	if err := exec.Command("iptables", cmdArgsUDP...).Run(); err != nil {
+	if err := exec.CommandContext(ctx, "iptables", cmdArgsUDP...).Run(); err != nil {
 		return &ErrSetupPortRule{
 			Protocol:  "udp",
 			Multiport: true,
@@ -97,13 +98,13 @@ func (ip *iptables) setupIptablesMultiport() error {
 	return nil
 }
 
-func (ip *iptables) setupIptablesTcp() error {
+func (ip *iptables) setupIptablesTcp(ctx context.Context) error {
 	for _, port := range ip.nfqwsPortsTcp {
 		log.Printf("Добавление правила для TCP порта %s", port)
 		cmdArgs := []string{"-t", "mangle", "-I", "POSTROUTING", "-p", "tcp", "--dport", port,
 			"-j", "NFQUEUE", "--queue-num", "200", "--queue-bypass"}
 		ip.enableMarkAndConnbytes(&cmdArgs)
-		if err := exec.Command("iptables", cmdArgs...).Run(); err != nil {
+		if err := exec.CommandContext(ctx, "iptables", cmdArgs...).Run(); err != nil {
 			return &ErrSetupPortRule{
 				Protocol:  "tcp",
 				Multiport: false,
@@ -117,12 +118,12 @@ func (ip *iptables) setupIptablesTcp() error {
 	return nil
 }
 
-func (ip *iptables) setupIptablesUdp() error {
+func (ip *iptables) setupIptablesUdp(ctx context.Context) error {
 	for _, port := range ip.nfqwsPortsUdp {
 		cmdArgs := []string{"-t", "mangle", "-I", "POSTROUTING", "-p", "udp", "--dport", port,
 			"-j", "NFQUEUE", "--queue-num", "200", "--queue-bypass"}
 		ip.enableMarkAndConnbytes(&cmdArgs)
-		if err := exec.Command("iptables", cmdArgs...).Run(); err != nil {
+		if err := exec.CommandContext(ctx, "iptables", cmdArgs...).Run(); err != nil {
 			return &ErrSetupPortRule{
 				Protocol:  "udp",
 				Multiport: false,
