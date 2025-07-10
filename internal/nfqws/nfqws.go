@@ -12,14 +12,16 @@ import (
 )
 
 type nfqws struct {
-	opt         []string
-	markSupport bool
+	opt          []string
+	markSupport  bool
+	hostlistMode string
 }
 
 func NewNfqws() *nfqws {
 	return &nfqws{
-		opt:         viper.GetStringSlice("nfqws.opt"),
-		markSupport: viper.GetBool("iptables.markSupport"),
+		opt:          viper.GetStringSlice("nfqws.opt"),
+		markSupport:  viper.GetBool("iptables.markSupport"),
+		hostlistMode: viper.GetString("nfqws.hostlist"),
 	}
 }
 
@@ -38,6 +40,8 @@ func (nf *nfqws) Start() {
 	nfqwsArgs := []string{"--debug=android", "--daemon", "--qnum=200", "--uid=0:0"}
 	nf.enableMark(&nfqwsArgs)
 
+	nf.enableHostlist(&nf.opt)
+
 	output, err := exec.CommandContext(ctx, "/system/bin/nfqws", append(nfqwsArgs, nf.opt...)...).CombinedOutput()
 	fmt.Println(string(output))
 	if err != nil {
@@ -55,7 +59,7 @@ func (nf *nfqws) Stop() {
 	fmt.Println(string(output))
 	if err != nil {
 		if _, ok := err.(*exec.ExitError); !ok {
-			log.Fatalf("%v", err)
+			log.Printf("%v", err)
 		}
 	} else {
 		fmt.Println("nfqws успешно остоновлен")
@@ -81,6 +85,53 @@ func (nf *nfqws) Status() (bool, error) {
 	} else {
 		return true, nil
 	}
+}
+
+func (nf *nfqws) enableHostlist(nfqwsArgs *[]string) {
+	var updatedArgs []string
+
+	switch nf.hostlistMode {
+	case "autohostlist":
+		for _, opt := range *nfqwsArgs {
+			if opt == "<HOSTLIST>" {
+				updatedArgs = append(updatedArgs, []string{
+					"--hostlist=/data/adb/modules/zapret/list/zapret-hosts.txt",
+					"--hostlist-exclude=/data/adb/modules/zapret/list/zapret-hosts-exclude.txt",
+					"--hostlist=/data/adb/zapret/zapret-hosts-user.txt",
+					"--hostlist-exclude=/data/adb/zapret/zapret-hosts-user-exclude.txt",
+					"--hostlist-auto=/data/adb/zapret/zapret-hosts-auto.txt",
+					"--hostlist-auto-fail-threshold=3",
+					"--hostlist-auto-fail-time=60",
+					"--hostlist-auto-retrans-threshold=3",
+				}...)
+			} else {
+				updatedArgs = append(updatedArgs, opt)
+			}
+		}
+	case "hostlist":
+		for _, opt := range *nfqwsArgs {
+			if opt == "<HOSTLIST>" {
+				updatedArgs = append(updatedArgs, []string{
+					"--hostlist=/data/adb/modules/zapret/list/zapret-hosts.txt",
+					"--hostlist-exclude=/data/adb/modules/zapret/list/zapret-hosts-exclude.txt",
+					"--hostlist=/data/adb/zapret/zapret-hosts-user.txt",
+					"--hostlist-exclude=/data/adb/zapret/zapret-hosts-user-exclude.txt",
+				}...)
+			} else {
+				updatedArgs = append(updatedArgs, opt)
+			}
+		}
+	default:
+		for _, opt := range *nfqwsArgs {
+			if opt == "<HOSTLIST>" {
+				continue
+			} else {
+				updatedArgs = append(updatedArgs, opt)
+			}
+		}
+	}
+
+	*nfqwsArgs = updatedArgs
 }
 
 func (nf *nfqws) enableMark(nfqwsArgs *[]string) {
