@@ -33,6 +33,7 @@ var enableCmd = &cobra.Command{
 	Long:  "Plaseholder Long",
 	Run: func(cmd *cobra.Command, args []string) {
 		viper.Set("magisk.autostart", true)
+		viper.WriteConfig()
 	},
 }
 
@@ -42,6 +43,7 @@ var disableCmd = &cobra.Command{
 	Long:  "Plaseholder Long",
 	Run: func(cmd *cobra.Command, args []string) {
 		viper.Set("magisk.autostart", false)
+		viper.WriteConfig()
 	},
 }
 
