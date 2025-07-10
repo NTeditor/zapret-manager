@@ -30,9 +30,12 @@ func init() {
 	viper.SetDefault("iptables.connbytesSupport", false)
 	viper.SetDefault("magisk.autostart", false)
 
-	// viper.SetDefault("nfqws.opt")
+	viper.SetDefault("nfqws.opt", []string{"--filter-tcp=80", "--domcase", "--methodeol", "--dpi-desync=fake,multisplit", "--dpi-desync-autottl=3", "--dpi-desync-fooling=md5sig", "--new",
+		"--filter-tcp=443", "--dpi-desync=fake,multisplit", "--dpi-desync-repeats=11", "--dpi-desync-fooling=md5sig", "--dpi-desync-fake-tls=/data/adb/modules/zapret/fake/tls_clienthello_vk_com.bin", "--dpi-desync-fake-tls-mod=rnd,dupsid,sni=vk.com", "--dpi-desync-split-seqovl=681", "--new",
+		"--filter-udp=443", "--dpi-desync=fake", "--dpi-desync-udplen-increment=250", "--dpi-desync-udplen-pattern=/data/adb/modules/zapret/fake/tls_clienthello_gosuslugi_ru.bin", "--dpi-desync-repeats=6", "--dpi-desync-fake-quic=/data/adb/modules/zapret/fake/quic_initial_vk_com.bin", "--new",
+		"--filter-udp=50000-50099", "--filter-l7=discord,stun", "--dpi-desync=fake", "--dpi-desync-repeats=5", "--dpi-desync-udplen-increment=200", "--dpi-desync-udplen-pattern=/data/adb/modules/zapret/fake/tls_clienthello_gosuslugi_ru.bin"})
 	viper.SetDefault("nfqws.ports.tcp", []string{"80", "443"})
-	viper.SetDefault("nfqws.ports.udp", []string{"443", "50000-50099"})
+	viper.SetDefault("nfqws.ports.udp", []string{"443", "50000:50099"})
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {

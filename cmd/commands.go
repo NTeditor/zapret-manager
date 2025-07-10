@@ -1,21 +1,41 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os/exec"
+	"time"
 
+	"github.com/nteditor/zapret-manager/internal/iptables"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
+
+func startZapret(cmd *cobra.Command, args []string) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(5)*time.Second)
+	defer cancel()
+	if err := iptables.NewIptables().SetupIptables(ctx); err != nil {
+		log.Fatalf("%v", err)
+	}
+
+	nfqwsArgs := append([]string{"/system/bin/nfqws", "--debug=android", "--daemon", "--qnum=200", "--uid=0:0"}, viper.GetStringSlice("nfqws.opt")...)
+	output, err := exec.Command("/system/bin/nfqws", nfqwsArgs...).Output()
+	if err != nil {
+		if err, ok := err.(*exec.ExitError); ok {
+			fmt.Printf("%s\n ExitCode: %d", err.Stderr, err.ExitCode())
+		}
+		log.Fatalf("%v", err)
+	} else {
+		fmt.Println(string(output))
+	}
+}
 
 var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Plaseholder Short",
 	Long:  "Plaseholder Long",
-	Run: func(cmd *cobra.Command, args []string) {
-
-	},
+	Run:   startZapret,
 }
 
 var stopCmd = &cobra.Command{
@@ -23,7 +43,21 @@ var stopCmd = &cobra.Command{
 	Short: "Plaseholder Short",
 	Long:  "Plaseholder Long",
 	Run: func(cmd *cobra.Command, args []string) {
+		output, err := exec.Command("killall", "nfqws").Output()
+		if err != nil {
+			if err, ok := err.(*exec.ExitError); ok {
+				fmt.Printf("%s\n ExitCode: %d", err.Stderr, err.ExitCode())
+			}
+			log.Fatalf("%v", err)
+		} else {
+			fmt.Println(string(output))
+		}
 
+		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(5)*time.Second)
+		defer cancel()
+		if err := iptables.NewIptables().CleanIptables(ctx); err != nil {
+			log.Fatalf("%v", err)
+		}
 	},
 }
 
@@ -92,9 +126,7 @@ var autostartCmd = &cobra.Command{
 	Hidden: true,
 	Run: func(cmd *cobra.Command, args []string) {
 		if viper.GetBool("magisk.autostart") {
-
-		} else {
-
+			startZapret(cmd, args)
 		}
 	},
 }
