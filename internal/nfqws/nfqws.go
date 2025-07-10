@@ -57,10 +57,14 @@ func (nf *nfqws) Stop() {
 		if _, ok := err.(*exec.ExitError); !ok {
 			log.Fatalf("%v", err)
 		}
+	} else {
+		fmt.Println("nfqws успешно остоновлен")
 	}
 
 	if err := iptables.NewIptables().CleanIptables(ctx); err != nil {
 		log.Fatalf("%v", err)
+	} else {
+		fmt.Println("iptables правила успешно очищены")
 	}
 }
 
