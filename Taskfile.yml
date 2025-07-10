@@ -1,0 +1,13 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  default:
+    env:
+      GOOS: android
+      GOARCH: arm64
+      CGO_ENABLED: 0
+    cmds:
+      - go build -o zapret
+      
