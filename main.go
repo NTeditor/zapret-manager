@@ -28,6 +28,7 @@ func init() {
 	viper.SetDefault("iptables.multiportSupport", false)
 	viper.SetDefault("iptables.markSupport", true)
 	viper.SetDefault("iptables.connbytesSupport", false)
+	viper.SetDefault("magisk.autostart", false)
 
 	// viper.SetDefault("nfqws.opt")
 	viper.SetDefault("nfqws.ports.tcp", []string{"80", "443"})

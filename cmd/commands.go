@@ -2,8 +2,11 @@ package cmd
 
 import (
 	"fmt"
+	"log"
+	"os/exec"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var startCmd = &cobra.Command{
@@ -29,7 +32,7 @@ var enableCmd = &cobra.Command{
 	Short: "Plaseholder Short",
 	Long:  "Plaseholder Long",
 	Run: func(cmd *cobra.Command, args []string) {
-
+		viper.Set("magisk.autostart", true)
 	},
 }
 
@@ -38,7 +41,7 @@ var disableCmd = &cobra.Command{
 	Short: "Plaseholder Short",
 	Long:  "Plaseholder Long",
 	Run: func(cmd *cobra.Command, args []string) {
-
+		viper.Set("magisk.autostart", false)
 	},
 }
 
@@ -47,7 +50,6 @@ var restartCmd = &cobra.Command{
 	Short: "Plaseholder Short",
 	Long:  "Plaseholder Long",
 	Run: func(cmd *cobra.Command, args []string) {
-
 	},
 }
 
@@ -56,7 +58,17 @@ var statusCmd = &cobra.Command{
 	Short: "Plaseholder Short",
 	Long:  "Plaseholder Long",
 	Run: func(cmd *cobra.Command, args []string) {
-
+		err := exec.Command("pgrep", "nfqws").Run()
+		if err, ok := err.(*exec.ExitError); ok {
+			if err.ExitCode() == 1 {
+				fmt.Println("Zapret не работает.")
+				return
+			}
+			log.Fatal(err)
+		} else {
+			fmt.Println("Zapret работает.")
+			return
+		}
 	},
 }
 
@@ -73,6 +85,18 @@ Libraries:
 	},
 }
 
+var autostartCmd = &cobra.Command{
+	Use:    "autostart",
+	Hidden: true,
+	Run: func(cmd *cobra.Command, args []string) {
+		if viper.GetBool("magisk.autostart") {
+
+		} else {
+
+		}
+	},
+}
+
 func init() {
-	rootCmd.AddCommand(startCmd, stopCmd, enableCmd, disableCmd, restartCmd, statusCmd, versionCmd)
+	rootCmd.AddCommand(startCmd, stopCmd, enableCmd, disableCmd, restartCmd, statusCmd, versionCmd, autostartCmd)
 }
