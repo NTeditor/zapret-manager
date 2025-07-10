@@ -1,0 +1,78 @@
+package cmd
+
+import (
+	"fmt"
+
+	"github.com/spf13/cobra"
+)
+
+var startCmd = &cobra.Command{
+	Use:   "start",
+	Short: "Plaseholder Short",
+	Long:  "Plaseholder Long",
+	Run: func(cmd *cobra.Command, args []string) {
+
+	},
+}
+
+var stopCmd = &cobra.Command{
+	Use:   "stop",
+	Short: "Plaseholder Short",
+	Long:  "Plaseholder Long",
+	Run: func(cmd *cobra.Command, args []string) {
+
+	},
+}
+
+var enableCmd = &cobra.Command{
+	Use:   "enable",
+	Short: "Plaseholder Short",
+	Long:  "Plaseholder Long",
+	Run: func(cmd *cobra.Command, args []string) {
+
+	},
+}
+
+var disableCmd = &cobra.Command{
+	Use:   "disable",
+	Short: "Plaseholder Short",
+	Long:  "Plaseholder Long",
+	Run: func(cmd *cobra.Command, args []string) {
+
+	},
+}
+
+var restartCmd = &cobra.Command{
+	Use:   "restart",
+	Short: "Plaseholder Short",
+	Long:  "Plaseholder Long",
+	Run: func(cmd *cobra.Command, args []string) {
+
+	},
+}
+
+var statusCmd = &cobra.Command{
+	Use:   "status",
+	Short: "Plaseholder Short",
+	Long:  "Plaseholder Long",
+	Run: func(cmd *cobra.Command, args []string) {
+
+	},
+}
+
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "Print version",
+	Long:  `Version of the program and libraries`,
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println(`Zapret Magisk  v0.1     [GPL v3.0 License]
+
+Libraries:
+  cobra        v1.9.1   [Apache 2.0 License]
+  viper        v1.20.1  [MIT License]`)
+	},
+}
+
+func init() {
+	rootCmd.AddCommand(startCmd, stopCmd, enableCmd, disableCmd, restartCmd, statusCmd, versionCmd)
+}
