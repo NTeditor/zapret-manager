@@ -1,41 +1,23 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"log"
-	"os/exec"
-	"time"
 
-	"github.com/nteditor/zapret-manager/internal/iptables"
+	"github.com/nteditor/zapret-manager/internal/nfqws"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-func startZapret(cmd *cobra.Command, args []string) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(5)*time.Second)
-	defer cancel()
-	if err := iptables.NewIptables().SetupIptables(ctx); err != nil {
-		log.Fatalf("%v", err)
-	}
-
-	nfqwsArgs := append([]string{"/system/bin/nfqws", "--debug=android", "--daemon", "--qnum=200", "--uid=0:0"}, viper.GetStringSlice("nfqws.opt")...)
-	output, err := exec.Command("/system/bin/nfqws", nfqwsArgs...).Output()
-	if err != nil {
-		if err, ok := err.(*exec.ExitError); ok {
-			fmt.Printf("%s\n ExitCode: %d", err.Stderr, err.ExitCode())
-		}
-		log.Fatalf("%v", err)
-	} else {
-		fmt.Println(string(output))
-	}
-}
+var nf = nfqws.NewNfqws()
 
 var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Plaseholder Short",
 	Long:  "Plaseholder Long",
-	Run:   startZapret,
+	Run: func(cmd *cobra.Command, args []string) {
+		nf.Start()
+	},
 }
 
 var stopCmd = &cobra.Command{
@@ -43,21 +25,7 @@ var stopCmd = &cobra.Command{
 	Short: "Plaseholder Short",
 	Long:  "Plaseholder Long",
 	Run: func(cmd *cobra.Command, args []string) {
-		output, err := exec.Command("killall", "nfqws").Output()
-		if err != nil {
-			if err, ok := err.(*exec.ExitError); ok {
-				fmt.Printf("%s\n ExitCode: %d", err.Stderr, err.ExitCode())
-			}
-			log.Fatalf("%v", err)
-		} else {
-			fmt.Println(string(output))
-		}
-
-		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(5)*time.Second)
-		defer cancel()
-		if err := iptables.NewIptables().CleanIptables(ctx); err != nil {
-			log.Fatalf("%v", err)
-		}
+		nf.Stop()
 	},
 }
 
@@ -86,6 +54,14 @@ var restartCmd = &cobra.Command{
 	Short: "Plaseholder Short",
 	Long:  "Plaseholder Long",
 	Run: func(cmd *cobra.Command, args []string) {
+		if status, err := nf.Status(); err != nil {
+			log.Fatalf("Не удалось проверить состояние nfqws; %v", err)
+		} else {
+			if status {
+				nf.Stop()
+			}
+		}
+		nf.Start()
 	},
 }
 
@@ -94,30 +70,31 @@ var statusCmd = &cobra.Command{
 	Short: "Plaseholder Short",
 	Long:  "Plaseholder Long",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := exec.Command("pgrep", "nfqws").Run()
-		if err, ok := err.(*exec.ExitError); ok {
-			if err.ExitCode() == 1 {
-				fmt.Println("Zapret не работает.")
-				return
-			}
-			log.Fatal(err)
+		if status, err := nf.Status(); err != nil {
+			log.Fatalf("Не удалось проверить состояние nfqws; %v", err)
 		} else {
-			fmt.Println("Zapret работает.")
-			return
+			if status {
+				fmt.Println("Zapret работает.")
+			} else {
+				fmt.Println("Zapret не работает.")
+			}
 		}
 	},
 }
 
 var versionCmd = &cobra.Command{
 	Use:   "version",
-	Short: "Print version",
-	Long:  `Version of the program and libraries`,
+	Short: "Показать версию",
+	Long:  `Отображает версию программы и используемых библиотек`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println(`Zapret Magisk  v0.1     [GPL v3.0 License]
+		fmt.Println(`--- Zapret Manager ---
+"Версия: v0.1
+Лицензия: GPL v3.0
 
-Libraries:
-  cobra        v1.9.1   [Apache 2.0 License]
-  viper        v1.20.1  [MIT License]`)
+Используемые библиотеки:
+  • cobra: v1.9.1 (Лицензия: Apache 2.0)
+  • viper: v1.20.1 (Лицензия: MIT)
+----------------------`)
 	},
 }
 
@@ -126,7 +103,7 @@ var autostartCmd = &cobra.Command{
 	Hidden: true,
 	Run: func(cmd *cobra.Command, args []string) {
 		if viper.GetBool("magisk.autostart") {
-			startZapret(cmd, args)
+			nf.Start()
 		}
 	},
 }
