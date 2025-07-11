@@ -9,6 +9,8 @@ import (
 	"github.com/spf13/viper"
 )
 
+const version = "0.0.1-dev-1"
+
 var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Plaseholder Short",
@@ -86,14 +88,17 @@ var versionCmd = &cobra.Command{
 	Short: "Показать версию",
 	Long:  `Отображает версию программы и используемых библиотек`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println(`--- Zapret Manager ---
-"Версия: v0.1
+		fmt.Printf(`--- Zapret Manager ---
+
+"Версия: v%s
 Лицензия: GPL v3.0
 
 Используемые библиотеки:
   • cobra: v1.9.1 (Лицензия: Apache 2.0)
   • viper: v1.20.1 (Лицензия: MIT)
-----------------------`)
+
+----------------------
+`, version)
 	},
 }
 
