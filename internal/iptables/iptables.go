@@ -2,7 +2,7 @@ package iptables
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"os/exec"
 	"strings"
 
@@ -69,7 +69,7 @@ func (ip *iptables) setupIptablesMultiport(ctx context.Context) error {
 	tcpPortsString := strings.Join(ip.nfqwsPortsTcp, ",")
 	udpPortsString := strings.Join(ip.nfqwsPortsUdp, ",")
 
-	log.Printf("Добавление правила для TCP портов %s (multiport)", tcpPortsString)
+	fmt.Printf("Добавление правила для TCP портов %s (multiport)", tcpPortsString)
 	cmdArgsTCP := []string{"-t", "mangle", "-I", "POSTROUTING", "-p", "tcp", "-m", "multiport",
 		"--dports", tcpPortsString, "-j", "NFQUEUE", "--queue-num", "200", "--queue-bypass"}
 	ip.enableMarkAndConnbytes(&cmdArgsTCP)
@@ -83,7 +83,7 @@ func (ip *iptables) setupIptablesMultiport(ctx context.Context) error {
 		}
 	}
 
-	log.Printf("Добавление правила для UDP портов %s (multiport)", udpPortsString)
+	fmt.Printf("Добавление правила для UDP портов %s (multiport)", udpPortsString)
 	cmdArgsUDP := []string{"-t", "mangle", "-I", "POSTROUTING", "-p", "udp", "-m", "multiport",
 		"--dports", udpPortsString, "-j", "NFQUEUE", "--queue-num", "200", "--queue-bypass"}
 	ip.enableMarkAndConnbytes(&cmdArgsUDP)
@@ -102,7 +102,7 @@ func (ip *iptables) setupIptablesMultiport(ctx context.Context) error {
 
 func (ip *iptables) setupIptablesTcp(ctx context.Context) error {
 	for _, port := range ip.nfqwsPortsTcp {
-		log.Printf("Добавление правила для TCP порта %s", port)
+		fmt.Printf("Добавление правила для TCP порта %s", port)
 		cmdArgs := []string{"-t", "mangle", "-I", "POSTROUTING", "-p", "tcp", "--dport", port,
 			"-j", "NFQUEUE", "--queue-num", "200", "--queue-bypass"}
 		ip.enableMarkAndConnbytes(&cmdArgs)
@@ -122,7 +122,7 @@ func (ip *iptables) setupIptablesTcp(ctx context.Context) error {
 
 func (ip *iptables) setupIptablesUdp(ctx context.Context) error {
 	for _, port := range ip.nfqwsPortsUdp {
-		log.Printf("Добавление правила для UDP порта %s", port)
+		fmt.Printf("Добавление правила для UDP порта %s", port)
 		cmdArgs := []string{"-t", "mangle", "-I", "POSTROUTING", "-p", "udp", "--dport", port,
 			"-j", "NFQUEUE", "--queue-num", "200", "--queue-bypass"}
 		ip.enableMarkAndConnbytes(&cmdArgs)
