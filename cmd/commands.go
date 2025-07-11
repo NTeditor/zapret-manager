@@ -9,14 +9,12 @@ import (
 	"github.com/spf13/viper"
 )
 
-var nf = nfqws.NewNfqws()
-
 var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Plaseholder Short",
 	Long:  "Plaseholder Long",
 	Run: func(cmd *cobra.Command, args []string) {
-		nf.Start()
+		nfqws.NewNfqws().Start()
 	},
 }
 
@@ -25,7 +23,7 @@ var stopCmd = &cobra.Command{
 	Short: "Plaseholder Short",
 	Long:  "Plaseholder Long",
 	Run: func(cmd *cobra.Command, args []string) {
-		nf.Stop()
+		nfqws.NewNfqws().Stop()
 	},
 }
 
@@ -54,6 +52,7 @@ var restartCmd = &cobra.Command{
 	Short: "Plaseholder Short",
 	Long:  "Plaseholder Long",
 	Run: func(cmd *cobra.Command, args []string) {
+		nf := nfqws.NewNfqws()
 		if status, err := nf.Status(); err != nil {
 			log.Fatalf("Не удалось проверить состояние nfqws; %v", err)
 		} else {
@@ -70,7 +69,7 @@ var statusCmd = &cobra.Command{
 	Short: "Plaseholder Short",
 	Long:  "Plaseholder Long",
 	Run: func(cmd *cobra.Command, args []string) {
-		if status, err := nf.Status(); err != nil {
+		if status, err := nfqws.NewNfqws().Status(); err != nil {
 			log.Fatalf("Не удалось проверить состояние nfqws; %v", err)
 		} else {
 			if status {
@@ -103,7 +102,7 @@ var autostartCmd = &cobra.Command{
 	Hidden: true,
 	Run: func(cmd *cobra.Command, args []string) {
 		if viper.GetBool("magisk.autostart") {
-			nf.Start()
+			nfqws.NewNfqws().Start()
 		}
 	},
 }
